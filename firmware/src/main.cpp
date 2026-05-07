@@ -13,6 +13,10 @@ void connectWiFi() {
   Serial.println("Starting WiFi...");
   Serial.print("Connecting to: ");
   Serial.println(WIFI_SSID);
+  WiFi.disconnect(true);
+  delay(1000);
+  WiFi.mode(WIFI_STA);
+  delay(100);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED) {
@@ -21,13 +25,13 @@ void connectWiFi() {
     attempts++;
     if (attempts > 40) {
       Serial.println("");
-      Serial.print("WiFi FAILED! Status code: ");
+      Serial.print("WiFi FAILED! Status: ");
       Serial.println(WiFi.status());
-      attempts = 0;
+      ESP.restart();
     }
   }
   Serial.println(" connected!");
-  Serial.print("Local IP: ");
+  Serial.print("IP: ");
   Serial.println(WiFi.localIP());
 }
 
@@ -45,11 +49,13 @@ void connectMQTT() {
 
 void setup() {
   Serial.begin(115200);
+  delay(2000);
+  Serial.println("=== ESP32 AIR QUALITY MONITOR ===");
   dht.begin();
   connectWiFi();
   client.setServer(MQTT_BROKER, MQTT_PORT);
   connectMQTT();
-  Serial.println("Setup complete!");
+  Serial.println("Setup complete! Sending data...");
 }
 
 void loop() {

@@ -1,6 +1,7 @@
 import json, logging, os, sys
 import yaml
 import paho.mqtt.client as mqtt
+sys.path.insert(0, os.path.dirname(__file__))
 from validator import validate
 from db_writer import DBWriter
 
@@ -12,7 +13,7 @@ def load_config():
 def setup_logging(config):
     os.makedirs("logs", exist_ok=True)
     logging.basicConfig(
-        level=config["logging"]["level"],
+        level="DEBUG",
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         handlers=[
             logging.FileHandler(config["logging"]["file"]),
@@ -32,12 +33,13 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     try:
         raw = json.loads(msg.payload.decode())
+        logger.info(f"Received: {raw}")
         raw["device_id"] = "esp32_aq_monitor"
         ok, clean = validate(raw, config)
+        logger.info(f"Validated: ok={ok} data={clean}")
         if ok:
             db.write(clean)
-    except json.JSONDecodeError as e:
-        logger.error(f"Bad JSON: {e}")
+            logger.info(f"Written to DB!")
     except Exception as e:
         logger.error(f"Error: {e}")
 
